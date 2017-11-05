@@ -26,6 +26,9 @@ body {
   text-align: center;
   font-size: 150%;
 }
+#readout-n-btns-parent #steps-readout {
+  font-size: 175%;
+}
 #main-btns-parent {
   display: flex;
   flex-wrap: wrap;
@@ -47,6 +50,11 @@ body {
 #main-btns-parent #main-btn-4 {
   background-color: #77685D;
 }
-#main-btns-parent div {
+.active-btn-border {
+  border: 5px solid #000;
+}
+#main-btns-parent div,
+#start-reset-btn,
+#strict-btn {
   cursor: pointer;
 }
