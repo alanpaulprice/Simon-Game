@@ -34,58 +34,87 @@ document.addEventListener('DOMContentLoaded', function() {
   let btnAudio4 = new Audio("Audio/simonSound4.mp3");
 
   let sequence = [];
-  let playerStepNum = 0;
+  let demoSeqInt = 0
+  let playerStepInt = 0;
   let strictMode = false;
   let playerMayAct = false;
 
+  // ===== UPDATE READOUT =====
+  function updateReadout() {
+    stepsReadout.innerHTML = sequence.length;
+  }
+
+  // ===== HIGHLIGHT BUTTON =====
+  function highlightButton(btnNum) {
+    eval("mainBtn" + btnNum).classList.add("active-btn-border");
+    playBtnAudio(btnNum);
+    setTimeout(() => {
+      eval("mainBtn" + btnNum).classList.remove("active-btn-border");
+    }, 750)
+  }
+
+  function playBtnAudio(btnNum) {
+    eval("btnAudio" + btnNum).play();
+  }
+
   // ===== CONTROL BUTTONS =====
 
+  // ===== START RESET =====
   startResetBtn.onclick = () => {
     startResetBtn.innerHTML = ("RESET");
     sequence = [];
-    updateReadout();
+    generateSequence();
   }
-
+  // ===== STRICT =====
   strictBtn.onclick = () => {
     strictMode = !strictMode;
     strictBtnIcon.classList.toggle("fa-check-circle");
     strictBtnIcon.classList.toggle("fa-times-circle");
   }
 
-  // ===== MAIN BUTTONS =====
-
-  mainBtn1.onclick = () => {
-    console.log("btn1");
-    btnAudio1.play();
-  }
-  mainBtn2.onclick = () => {
-    console.log("btn2");
-    btnAudio2.play();
-  }
-  mainBtn3.onclick = () => {
-    console.log("btn3");
-    btnAudio3.play();
-  }
-  mainBtn4.onclick = () => {
-    console.log("btn4");
-    btnAudio4.play();
-  }
-
   // ===== MAIN GAME ALGOS =====
 
-  function generateSequence () {
+  // ===== GENERATE SEQUENCE =====
+  function generateSequence() {
     sequence.push(Math.ceil(Math.random() * 4));
-    playSequence();
+    updateReadout();
+    demoSequence();
   }
+  // ===== DEMO SEQUENCE =====
+  function demoSequence() {
+    setTimeout(() => {
+      highlightButton(sequence[demoSeqInt]);
+      demoSeqInt++;
+      if (demoSeqInt < sequence.length) {
+        demoSequence();
+      } else {
+        playerStepNum = 0;
+        demoSeqInt = 0;
+        playerMayAct = true;
+      }
+    }, 1000)
+  }
+  // ===== PLAYER TURN =====
 
-  function playSequence () {
-    for (let i = 0; i < sequence.length; i++) {
-      // stuff
+  // ===== MAIN BUTTONS =====
+  mainBtn1.onclick = () => playerTurn(1);
+  mainBtn2.onclick = () => playerTurn(2);
+  mainBtn3.onclick = () => playerTurn(3);
+  mainBtn4.onclick = () => playerTurn(4);
+
+  function playerTurn(btn) {
+    if (!playerMayAct) { return; }
+
+    if (btn === sequence[playerStepInt]) {
+      console.log("correct");
+      highlightButton(btn);
+      // playerStepInt++,
+    }
+    else {
+      console.log("false");
+      highlightButton(btn);
     }
   }
 
-  // ===== UPDATE READOUT =====
-  function updateReadout () {
-    stepsReadout.innerHTML = sequence.length;
-  }
+
 }); /* dom content loaded */
