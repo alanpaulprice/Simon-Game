@@ -14,7 +14,9 @@
 fa-times-circle, fa-check-circle
 */
 
-//TODO: make the play sequence function work
+//TODO: fix the issue caused by resetting during a demo seq, most likely
+// an issue involving the timeout continuing despite the sequence var
+// having been wiped clean
 
 document.addEventListener('DOMContentLoaded', function() {
   console.clear();
@@ -54,6 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function playBtnAudio(btnNum) {
+    eval("btnAudio" + btnNum).currentTime = 0;
     eval("btnAudio" + btnNum).play();
   }
 
@@ -88,9 +91,10 @@ document.addEventListener('DOMContentLoaded', function() {
       if (demoSeqInt < sequence.length) {
         demoSequence();
       } else {
-        playerStepNum = 0;
+        playerStepInt = 0;
         demoSeqInt = 0;
         playerMayAct = true;
+        console.log(sequence);
       }
     }, 1000)
   }
@@ -103,16 +107,26 @@ document.addEventListener('DOMContentLoaded', function() {
   mainBtn4.onclick = () => playerTurn(4);
 
   function playerTurn(btn) {
+    console.log(btn, playerStepInt);
     if (!playerMayAct) { return; }
 
     if (btn === sequence[playerStepInt]) {
-      console.log("correct");
       highlightButton(btn);
-      // playerStepInt++,
+      if (playerStepInt < sequence.length - 1) {
+        playerStepInt++;
+      } else {
+        playerMayAct = false;
+        setTimeout(() => {
+          generateSequence();
+        }, 2000)
+      }
     }
     else {
-      console.log("false");
-      highlightButton(btn);
+      playerMayAct = false;
+      alert("MISTAKE");
+      playerStepInt = 0;
+      demoSeqInt = 0;
+      demoSequence();
     }
   }
 
