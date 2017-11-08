@@ -14,9 +14,7 @@
 fa-times-circle, fa-check-circle
 */
 
-//TODO: fix the issue caused by resetting during a demo seq, most likely
-// an issue involving the timeout continuing despite the sequence var
-// having been wiped clean
+//TODO:
 
 document.addEventListener('DOMContentLoaded', function() {
   console.clear();
@@ -48,6 +46,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ===== HIGHLIGHT BUTTON =====
   function highlightButton(btnNum) {
+    if (!btnNum) { // prevents error when resetting mid demo seq
+      return
+    }
     eval("mainBtn" + btnNum).classList.add("active-btn-border");
     playBtnAudio(btnNum);
     setTimeout(() => {
@@ -112,6 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (btn === sequence[playerStepInt]) {
       highlightButton(btn);
+      playerTurnDelay();
       if (playerStepInt < sequence.length - 1) {
         playerStepInt++;
       } else {
@@ -128,6 +130,13 @@ document.addEventListener('DOMContentLoaded', function() {
       demoSeqInt = 0;
       demoSequence();
     }
+  }
+
+  function playerTurnDelay () {
+    playerMayAct = false;
+    setTimeout(() => {
+      playerMayAct = true;
+    }, 750)
   }
 
 
