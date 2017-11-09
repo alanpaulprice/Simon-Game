@@ -12,11 +12,9 @@
 - can win game by reaching 20 steps, notified of victory, reset game
 
 - error audio: http://freesound.org/data/previews/171/171497_2437358-lq.mp3
-
-fa-times-circle, fa-check-circle
 */
 
-//TODO: add time limit on player move
+//TODO: add media queries
 
 document.addEventListener('DOMContentLoaded', function() {
   console.clear();
@@ -41,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let playerStepInt = 0;
   let strictMode = false;
   let playerMayAct = false;
+  let playerMoveTimeout;
 
   // ===== UPDATE READOUT =====
   function updateReadout() {
@@ -108,7 +107,8 @@ document.addEventListener('DOMContentLoaded', function() {
         playerStepInt = 0;
         demoSeqInt = 0;
         playerMayAct = true;
-        console.log(sequence);
+        // TRIGGER PLAYER TIMER
+        triggerPlayerTimer();
       }
     }, 1000)
   }
@@ -129,8 +129,13 @@ document.addEventListener('DOMContentLoaded', function() {
       playerTurnDelay();
       if (playerStepInt < sequence.length - 1) {
         playerStepInt++;
+        // RESET PLAYER TIMER
+        clearTimeout(playerMoveTimeout);
+        triggerPlayerTimer();
       } else {
         playerMayAct = false;
+        // END PLAYER TIMER
+        clearTimeout(playerMoveTimeout);
         if (!checkForWin()) {
           setTimeout(() => {
             generateSequence();
@@ -139,34 +144,45 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     } // ===== PLAYER TURN - MISTAKE =====
     else {
-      playerMayAct = false;
-      readoutMistake();
-      errorAudio.play();
-      playerStepInt = 0;
-      demoSeqInt = 0;
-      setTimeout(() => {
-        if (strictMode) {
-          sequence = [];
-          generateSequence();
-        } else {
-          demoSequence();
-        }
-      }, 1000)
+      mistakeMade();
     }
   }
-
+  // ===== MISTAKE MADE =====
+  function mistakeMade () {
+    playerMayAct = false;
+    readoutMistake();
+    errorAudio.play();
+    playerStepInt = 0;
+    demoSeqInt = 0;
+    setTimeout(() => {
+      if (strictMode) {
+        sequence = [];
+        generateSequence();
+      } else {
+        demoSequence();
+      }
+    }, 1000)
+  }
+  // ===== PLAYER TURN DELAY =====
   function playerTurnDelay() {
     playerMayAct = false;
     setTimeout(() => {
       playerMayAct = true;
     }, 750)
   }
-
+  // ===== READOUT MISTAKE =====
   function readoutMistake() {
     stepsReadout.innerHTML = "!!";
     setTimeout(() => {
       updateReadout();
     }, 2000)
+  }
+
+  // ===== TRIGGER PLAYER TIMER =====
+  function triggerPlayerTimer () {
+    playerMoveTimeout = setTimeout(() => {
+      mistakeMade();
+    }, 5000)
   }
 
 
