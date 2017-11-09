@@ -11,10 +11,14 @@
 - optional strict mode, mistake = restart whole game
 - can win game by reaching 20 steps, notified of victory, reset game
 
+- error audio: http://freesound.org/data/previews/171/171497_2437358-lq.mp3
+
 fa-times-circle, fa-check-circle
 */
 
-//TODO:
+//TODO: add time limit on player move
+//TODO: add end game - checkforwin on last successful move
+//TODO: add strict functionality
 
 document.addEventListener('DOMContentLoaded', function() {
   console.clear();
@@ -32,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let btnAudio2 = new Audio("Audio/simonSound2.mp3");
   let btnAudio3 = new Audio("Audio/simonSound3.mp3");
   let btnAudio4 = new Audio("Audio/simonSound4.mp3");
+  let errorAudio = new Audio("Audio/simonError.mp3");
 
   let sequence = [];
   let demoSeqInt = 0
@@ -55,13 +60,11 @@ document.addEventListener('DOMContentLoaded', function() {
       eval("mainBtn" + btnNum).classList.remove("active-btn-border");
     }, 750)
   }
-
+  // ===== PLAY BUTTON AUDIO =====
   function playBtnAudio(btnNum) {
     eval("btnAudio" + btnNum).currentTime = 0;
     eval("btnAudio" + btnNum).play();
   }
-
-  // ===== CONTROL BUTTONS =====
 
   // ===== START RESET =====
   startResetBtn.onclick = () => {
@@ -76,7 +79,19 @@ document.addEventListener('DOMContentLoaded', function() {
     strictBtnIcon.classList.toggle("fa-times-circle");
   }
 
-  // ===== MAIN GAME ALGOS =====
+  // ===== CHECK FOR WIN =====
+  function checkForWin() {
+    if (sequence.length === 2) {
+      stepsReadout.innerHTML = "WIN";
+      sequence = [];
+      setTimeout(() => {
+        generateSequence();
+      }, 2000)
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   // ===== GENERATE SEQUENCE =====
   function generateSequence() {
@@ -108,9 +123,10 @@ document.addEventListener('DOMContentLoaded', function() {
   mainBtn4.onclick = () => playerTurn(4);
 
   function playerTurn(btn) {
-    console.log(btn, playerStepInt);
-    if (!playerMayAct) { return; }
-
+    if (!playerMayAct) {
+      return;
+    }
+    // ===== PLAYER TURN - CORRECT =====
     if (btn === sequence[playerStepInt]) {
       highlightButton(btn);
       playerTurnDelay();
@@ -118,25 +134,37 @@ document.addEventListener('DOMContentLoaded', function() {
         playerStepInt++;
       } else {
         playerMayAct = false;
-        setTimeout(() => {
-          generateSequence();
-        }, 2000)
+        if (!checkForWin()) {
+          setTimeout(() => {
+            generateSequence();
+          }, 2000)
+        }
       }
-    }
+    } // ===== PLAYER TURN - MISTAKE =====
     else {
       playerMayAct = false;
-      alert("MISTAKE");
+      readoutMistake();
+      errorAudio.play();
       playerStepInt = 0;
       demoSeqInt = 0;
-      demoSequence();
+      setTimeout(() => {
+        demoSequence();
+      }, 1000)
     }
   }
 
-  function playerTurnDelay () {
+  function playerTurnDelay() {
     playerMayAct = false;
     setTimeout(() => {
       playerMayAct = true;
     }, 750)
+  }
+
+  function readoutMistake() {
+    stepsReadout.innerHTML = "!!";
+    setTimeout(() => {
+      updateReadout();
+    }, 2000)
   }
 
 
