@@ -17,8 +17,6 @@ fa-times-circle, fa-check-circle
 */
 
 //TODO: add time limit on player move
-//TODO: add end game - checkforwin on last successful move
-//TODO: add strict functionality
 
 document.addEventListener('DOMContentLoaded', function() {
   console.clear();
@@ -81,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ===== CHECK FOR WIN =====
   function checkForWin() {
-    if (sequence.length === 2) {
+    if (sequence.length === 4) {
       stepsReadout.innerHTML = "WIN";
       sequence = [];
       setTimeout(() => {
@@ -114,14 +112,13 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }, 1000)
   }
-  // ===== PLAYER TURN =====
 
   // ===== MAIN BUTTONS =====
   mainBtn1.onclick = () => playerTurn(1);
   mainBtn2.onclick = () => playerTurn(2);
   mainBtn3.onclick = () => playerTurn(3);
   mainBtn4.onclick = () => playerTurn(4);
-
+  // ===== PLAYER TURN =====
   function playerTurn(btn) {
     if (!playerMayAct) {
       return;
@@ -148,7 +145,12 @@ document.addEventListener('DOMContentLoaded', function() {
       playerStepInt = 0;
       demoSeqInt = 0;
       setTimeout(() => {
-        demoSequence();
+        if (strictMode) {
+          sequence = [];
+          generateSequence();
+        } else {
+          demoSequence();
+        }
       }, 1000)
     }
   }
