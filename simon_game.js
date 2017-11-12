@@ -14,15 +14,19 @@
 - error audio: http://freesound.org/data/previews/171/171497_2437358-lq.mp3
 */
 
+//TODO: fix the fuckery with the timeouts not being cleared
+// error when reset during demo? store them as vars and clear them all on
+// reset
 //TODO: add media queries
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function() {
   console.clear();
 
   let startResetBtn = document.getElementById("start-reset-btn");
   let strictBtn = document.getElementById("strict-btn");
   let strictBtnIcon = document.getElementById("strict-btn-icon");
   let stepsReadout = document.getElementById("steps-readout");
+  let mainBtns = document.getElementsByClassName("main-btns");
   let mainBtn1 = document.getElementById("main-btn-1");
   let mainBtn2 = document.getElementById("main-btn-2");
   let mainBtn3 = document.getElementById("main-btn-3");
@@ -35,11 +39,17 @@ document.addEventListener('DOMContentLoaded', function() {
   let errorAudio = new Audio("Audio/simonError.mp3");
 
   let sequence = [];
-  let demoSeqInt = 0
+  let demoSeqInt = 0;
   let playerStepInt = 0;
   let strictMode = false;
   let playerMayAct = false;
+
   let playerMoveTimeout;
+  let demoSeqTimeout;
+  let mistakeTimeout;
+  let noWinTimeout;
+  let btnHighlightTimeout;
+  let gameWonTimeout;
 
   // ===== UPDATE READOUT =====
   function updateReadout() {
@@ -48,14 +58,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ===== HIGHLIGHT BUTTON =====
   function highlightButton(btnNum) {
-    if (!btnNum) { // prevents error when resetting mid demo seq
-      return
-    }
-    eval("mainBtn" + btnNum).classList.add("active-btn-border");
-    playBtnAudio(btnNum);
-    setTimeout(() => {
-      eval("mainBtn" + btnNum).classList.remove("active-btn-border");
-    }, 750)
+      eval("mainBtn" + btnNum).classList.add("active-btn-border");
+      playBtnAudio(btnNum);
+      clearTimeout(btnHighlightTimeout);
+      btnHighlightTimeout = setTimeout(() => {
+        eval("mainBtn" + btnNum).classList.remove("active-btn-border");
+      }, 500);
   }
   // ===== PLAY BUTTON AUDIO =====
   function playBtnAudio(btnNum) {
@@ -66,7 +74,20 @@ document.addEventListener('DOMContentLoaded', function() {
   // ===== START RESET =====
   startResetBtn.onclick = () => {
     startResetBtn.innerHTML = ("RESET");
+    clearTimeout(playerMoveTimeout);
+    clearTimeout(demoSeqTimeout);
+    clearTimeout(mistakeTimeout);
+    clearTimeout(noWinTimeout);
+    clearTimeout(btnHighlightTimeout);
+    clearTimeout(gameWonTimeout);
     sequence = [];
+    demoSeqInt = 0
+    playerStepInt = 0;
+    playerMayAct = false;
+    for (let i = 0; i < mainBtns.length; i++) {
+      mainBtns[i].classList.remove("active-btn-border");
+    }
+    console.log("NEW SEQUENCE!");
     generateSequence();
   }
   // ===== STRICT =====
@@ -81,7 +102,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sequence.length === 4) {
       stepsReadout.innerHTML = "WIN";
       sequence = [];
-      setTimeout(() => {
+      clearTimeout(gameWonTimeout);
+      gameWonTimeout = setTimeout(() => {
         generateSequence();
       }, 2000)
       return true;
@@ -93,12 +115,15 @@ document.addEventListener('DOMContentLoaded', function() {
   // ===== GENERATE SEQUENCE =====
   function generateSequence() {
     sequence.push(Math.ceil(Math.random() * 4));
+    console.log(sequence);
     updateReadout();
     demoSequence();
   }
   // ===== DEMO SEQUENCE =====
   function demoSequence() {
-    setTimeout(() => {
+    playerMayAct = false;
+    clearTimeout(demoSeqTimeout);
+    demoSeqTimeout = setTimeout(() => {
       highlightButton(sequence[demoSeqInt]);
       demoSeqInt++;
       if (demoSeqInt < sequence.length) {
@@ -130,14 +155,14 @@ document.addEventListener('DOMContentLoaded', function() {
       if (playerStepInt < sequence.length - 1) {
         playerStepInt++;
         // RESET PLAYER TIMER
-        clearTimeout(playerMoveTimeout);
         triggerPlayerTimer();
       } else {
         playerMayAct = false;
         // END PLAYER TIMER
         clearTimeout(playerMoveTimeout);
         if (!checkForWin()) {
-          setTimeout(() => {
+          clearTimeout(noWinTimeout);
+          noWinTimeout = setTimeout(() => {
             generateSequence();
           }, 2000)
         }
@@ -148,13 +173,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   // ===== MISTAKE MADE =====
-  function mistakeMade () {
+  function mistakeMade() {
     playerMayAct = false;
-    readoutMistake();
+    // END PLAYER TIMER
+    clearTimeout(playerMoveTimeout);
     errorAudio.play();
+    readoutMistake();
     playerStepInt = 0;
     demoSeqInt = 0;
-    setTimeout(() => {
+    clearTimeout(mistakeTimeout)
+    mistakeTimeout = setTimeout(() => {
       if (strictMode) {
         sequence = [];
         generateSequence();
@@ -179,8 +207,10 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ===== TRIGGER PLAYER TIMER =====
-  function triggerPlayerTimer () {
+  function triggerPlayerTimer() {
+    clearTimeout(playerMoveTimeout);
     playerMoveTimeout = setTimeout(() => {
+      console.log("timeout mistake");
       mistakeMade();
     }, 5000)
   }
