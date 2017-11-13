@@ -56,7 +56,8 @@ body {
 }
 #main-btns-parent div,
 #start-reset-btn,
-#strict-btn {
+#strict-btn,
+#title span {
   cursor: pointer;
 }
 @media screen and (max-width: 768px) {

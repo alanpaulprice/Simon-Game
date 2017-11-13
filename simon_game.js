@@ -1,18 +1,9 @@
 /* jshint esversion: 6 */
 
 /*
-- presented with sequence of random button presses
-- unique sounds correspond to buttons
-- each new sequence is a continuation of previous
-- sounds play when showing sequence and when user pushes
-- notified if wrong button is pushed, sequence restarts, compu shows it again too
-- display shows how many steps are in current sequence
-- button to restart whole game
-- optional strict mode, mistake = restart whole game
-- can win game by reaching 20 steps, notified of victory, reset game
-
 - error audio: http://freesound.org/data/previews/171/171497_2437358-lq.mp3
 */
+
 //TODO: add pause before restart with -- display
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -39,13 +30,17 @@ document.addEventListener("DOMContentLoaded", function() {
   let playerStepInt = 0;
   let strictMode = false;
   let playerMayAct = false;
-
+  // all timeouts saved as vars, so they can be cleared on game reset
   let playerMoveTimeout;
   let demoSeqTimeout;
   let mistakeTimeout;
   let noWinTimeout;
   let btnHighlightTimeout;
   let gameWonTimeout;
+  let gameResetTimeout;
+  let turnDelayTimeout;
+  let delayBeforeTurn;
+  let readoutMistakeTimeout;
 
   // ===== UPDATE READOUT =====
   function updateReadout() {
@@ -53,6 +48,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   // ===== HIGHLIGHT BUTTON =====
+  // adds a border to a button for half a second and plays the btn's audio
   function highlightButton(btnNum) {
       eval("mainBtn" + btnNum).classList.add("active-btn-border");
       playBtnAudio(btnNum);
@@ -61,6 +57,7 @@ document.addEventListener("DOMContentLoaded", function() {
         eval("mainBtn" + btnNum).classList.remove("active-btn-border");
       }, 500);
   }
+
   // ===== PLAY BUTTON AUDIO =====
   function playBtnAudio(btnNum) {
     eval("btnAudio" + btnNum).currentTime = 0;
@@ -68,24 +65,40 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   // ===== START RESET =====
+  // clears all timeouts, resets game vars to inital values, clears any incomplete
+  // btn higlight borders, 1 second pause then start new game
   startResetBtn.onclick = () => {
-    startResetBtn.innerHTML = ("RESET");
     clearTimeout(playerMoveTimeout);
     clearTimeout(demoSeqTimeout);
     clearTimeout(mistakeTimeout);
     clearTimeout(noWinTimeout);
     clearTimeout(btnHighlightTimeout);
     clearTimeout(gameWonTimeout);
+    clearTimeout(gameResetTimeout);
+    clearTimeout(turnDelayTimeout);
+    clearTimeout(delayBeforeTurn);
+    clearTimeout(readoutMistakeTimeout);
+
+    startResetBtn.innerHTML = ("RESET");
+    stepsReadout.innerHTML = ("--");
+    
     sequence = [];
     demoSeqInt = 0
     playerStepInt = 0;
     playerMayAct = false;
+
     for (let i = 0; i < mainBtns.length; i++) {
       mainBtns[i].classList.remove("active-btn-border");
     }
-    generateSequence();
+
+    clearTimeout(gameResetTimeout);
+    gameResetTimeout = setTimeout(() => {
+      generateSequence();
+    }, 1000);
   }
+
   // ===== STRICT =====
+  // toggles strict mode
   strictBtn.onclick = () => {
     strictMode = !strictMode;
     strictBtnIcon.classList.toggle("fa-check-circle");
@@ -93,6 +106,8 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   // ===== CHECK FOR WIN =====
+  // if the player has completed the game, wait 2 secs then display WIN and reset
+  // otherwise, just return false
   function checkForWin() {
     if (sequence.length === 20) {
       stepsReadout.innerHTML = "WIN";
@@ -108,13 +123,17 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   // ===== GENERATE SEQUENCE =====
+  // adds a new move to the end of the sequence, triggers demo
   function generateSequence() {
     sequence.push(Math.ceil(Math.random() * 4));
     console.log(sequence);
     updateReadout();
     demoSequence();
   }
+
   // ===== DEMO SEQUENCE =====
+  // highlights each button in sequence, when end reached, reset previously used
+  // vars and allow player turn and start the timer
   function demoSequence() {
     playerMayAct = false;
     clearTimeout(demoSeqTimeout);
@@ -124,26 +143,28 @@ document.addEventListener("DOMContentLoaded", function() {
       if (demoSeqInt < sequence.length) {
         demoSequence();
       } else {
-        playerStepInt = 0;
-        demoSeqInt = 0;
-        playerMayAct = true;
-        // TRIGGER PLAYER TIMER
-        triggerPlayerTimer();
+        clearTimeout(delayBeforeTurn);
+        delayBeforeTurn = setTimeout(() => {
+          playerStepInt = 0;
+          demoSeqInt = 0;
+          playerMayAct = true;
+          // TRIGGER PLAYER TIMER
+          triggerPlayerTimer();
+        }, 500)
       }
     }, 1000)
   }
 
-  // ===== MAIN BUTTONS =====
-  mainBtn1.onclick = () => playerTurn(1);
-  mainBtn2.onclick = () => playerTurn(2);
-  mainBtn3.onclick = () => playerTurn(3);
-  mainBtn4.onclick = () => playerTurn(4);
   // ===== PLAYER TURN =====
+  // if not player turn, do nothing
   function playerTurn(btn) {
     if (!playerMayAct) {
       return;
     }
-    // ===== PLAYER TURN - CORRECT =====
+    // ===== CORRECT =====
+    // /highlight button, reset turn timer, int++
+    // or if last move of seq, prevent player move, check for win
+    // if win, do nothing else here (checkforwin func initiated), otherwise gen new seq
     if (btn === sequence[playerStepInt]) {
       highlightButton(btn);
       playerTurnDelay();
@@ -153,6 +174,7 @@ document.addEventListener("DOMContentLoaded", function() {
         triggerPlayerTimer();
       } else {
         playerMayAct = false;
+        clearTimeout(turnDelayTimeout);
         // END PLAYER TIMER
         clearTimeout(playerMoveTimeout);
         if (!checkForWin()) {
@@ -162,12 +184,14 @@ document.addEventListener("DOMContentLoaded", function() {
           }, 2000)
         }
       }
-    } // ===== PLAYER TURN - MISTAKE =====
+    } // ===== MISTAKE =====
     else {
       mistakeMade();
     }
   }
+
   // ===== MISTAKE MADE =====
+  // prevent player move, end timer, play audio,
   function mistakeMade() {
     playerMayAct = false;
     // END PLAYER TIMER
@@ -186,17 +210,21 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     }, 1000)
   }
+
   // ===== PLAYER TURN DELAY =====
   function playerTurnDelay() {
     playerMayAct = false;
-    setTimeout(() => {
+    clearTimeout(turnDelayTimeout);
+    turnDelayTimeout = setTimeout(() => {
       playerMayAct = true;
     }, 750)
   }
+
   // ===== READOUT MISTAKE =====
   function readoutMistake() {
     stepsReadout.innerHTML = "!!";
-    setTimeout(() => {
+    clearTimeout(readoutMistakeTimeout);
+    readoutMistakeTimeout = setTimeout(() => {
       updateReadout();
     }, 2000)
   }
@@ -210,5 +238,9 @@ document.addEventListener("DOMContentLoaded", function() {
     }, 5000)
   }
 
+  mainBtn1.onclick = () => playerTurn(1);
+  mainBtn2.onclick = () => playerTurn(2);
+  mainBtn3.onclick = () => playerTurn(3);
+  mainBtn4.onclick = () => playerTurn(4);
 
 }); /* dom content loaded */
