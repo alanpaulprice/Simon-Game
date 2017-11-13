@@ -13,11 +13,7 @@
 
 - error audio: http://freesound.org/data/previews/171/171497_2437358-lq.mp3
 */
-
-//TODO: fix the fuckery with the timeouts not being cleared
-// error when reset during demo? store them as vars and clear them all on
-// reset
-//TODO: add media queries
+//TODO: add pause before restart with -- display
 
 document.addEventListener("DOMContentLoaded", function() {
   console.clear();
@@ -87,7 +83,6 @@ document.addEventListener("DOMContentLoaded", function() {
     for (let i = 0; i < mainBtns.length; i++) {
       mainBtns[i].classList.remove("active-btn-border");
     }
-    console.log("NEW SEQUENCE!");
     generateSequence();
   }
   // ===== STRICT =====
@@ -99,7 +94,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // ===== CHECK FOR WIN =====
   function checkForWin() {
-    if (sequence.length === 4) {
+    if (sequence.length === 20) {
       stepsReadout.innerHTML = "WIN";
       sequence = [];
       clearTimeout(gameWonTimeout);
