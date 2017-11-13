@@ -4,8 +4,6 @@
 - error audio: http://freesound.org/data/previews/171/171497_2437358-lq.mp3
 */
 
-//TODO: add pause before restart with -- display
-
 document.addEventListener("DOMContentLoaded", function() {
   console.clear();
 
@@ -65,8 +63,8 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   // ===== START RESET =====
-  // clears all timeouts, resets game vars to inital values, clears any incomplete
-  // btn higlight borders, 1 second pause then start new game
+  // clears timeouts (all, to be safe), resets game vars to inital values,
+  // clears any incomplete btn higlight borders, 1 second pause then start new game
   startResetBtn.onclick = () => {
     clearTimeout(playerMoveTimeout);
     clearTimeout(demoSeqTimeout);
@@ -81,7 +79,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     startResetBtn.innerHTML = ("RESET");
     stepsReadout.innerHTML = ("--");
-    
+
     sequence = [];
     demoSeqInt = 0
     playerStepInt = 0;
@@ -126,14 +124,13 @@ document.addEventListener("DOMContentLoaded", function() {
   // adds a new move to the end of the sequence, triggers demo
   function generateSequence() {
     sequence.push(Math.ceil(Math.random() * 4));
-    console.log(sequence);
     updateReadout();
     demoSequence();
   }
 
   // ===== DEMO SEQUENCE =====
-  // highlights each button in sequence, when end reached, reset previously used
-  // vars and allow player turn and start the timer
+  // highlights each button in sequence. when end reached, after pause, reset
+  // previously used vars and allow player turn and start the timer
   function demoSequence() {
     playerMayAct = false;
     clearTimeout(demoSeqTimeout);
@@ -162,9 +159,9 @@ document.addEventListener("DOMContentLoaded", function() {
       return;
     }
     // ===== CORRECT =====
-    // /highlight button, reset turn timer, int++
-    // or if last move of seq, prevent player move, check for win
-    // if win, do nothing else here (checkforwin func initiated), otherwise gen new seq
+    // highlight the button, delay before next turn allowed, reset turn timer, int++
+    // if last move of seq, end timers for turn delay and turn, check if win
+    // if no win, new seq, if win, run checkforwin func
     if (btn === sequence[playerStepInt]) {
       highlightButton(btn);
       playerTurnDelay();
@@ -191,7 +188,8 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   // ===== MISTAKE MADE =====
-  // prevent player move, end timer, play audio,
+  // prevent player move, end turn timer, play audio, update readout, reset ints
+  // if strict, wipe seq, if not, run demo again
   function mistakeMade() {
     playerMayAct = false;
     // END PLAYER TIMER
@@ -212,6 +210,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   // ===== PLAYER TURN DELAY =====
+  // temporarily change playermayact to false
   function playerTurnDelay() {
     playerMayAct = false;
     clearTimeout(turnDelayTimeout);
@@ -221,6 +220,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   // ===== READOUT MISTAKE =====
+  // temporarily change readout to !!
   function readoutMistake() {
     stepsReadout.innerHTML = "!!";
     clearTimeout(readoutMistakeTimeout);
@@ -230,10 +230,10 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   // ===== TRIGGER PLAYER TIMER =====
+  // if player doesn't make move for 5sec while able to act, count as mistake
   function triggerPlayerTimer() {
     clearTimeout(playerMoveTimeout);
     playerMoveTimeout = setTimeout(() => {
-      console.log("timeout mistake");
       mistakeMade();
     }, 5000)
   }
